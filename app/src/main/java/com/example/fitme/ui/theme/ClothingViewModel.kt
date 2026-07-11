@@ -71,4 +71,14 @@ class ClothingViewModel(private val dao: ClothingDao) : ViewModel() {
     fun deleteMultipleClothing(items: List<ClothingItem>) {
         viewModelScope.launch { dao.deleteClothingList(items) }
     }
+
+    fun updateLastWornDate(id: String) {
+        viewModelScope.launch {
+            dao.updateLastWornDate(id, System.currentTimeMillis())
+        }
+    }
+
+    suspend fun getClothingById(id: String): ClothingItem? {
+        return dao.getClothingById(id)
+    }
 }

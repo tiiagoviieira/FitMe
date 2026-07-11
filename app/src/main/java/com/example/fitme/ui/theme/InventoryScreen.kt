@@ -21,12 +21,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
 import com.example.fitme.model.ClothingItem
+import androidx.compose.material.icons.filled.Edit
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun InventoryScreen(
     viewModel: ClothingViewModel,
-    onNavigateToAdd: () -> Unit
+    onNavigateToAdd: () -> Unit,
+    onNavigateToEdit: (String) -> Unit
 ) {
     val clothingList by viewModel.processedClothing.collectAsState(initial = emptyList())
     val weathersOptions by viewModel.availableWeathers.collectAsState(initial = emptyList())
@@ -45,30 +47,47 @@ fun InventoryScreen(
         topBar = {
             if (isSelectionMode) {
                 TopAppBar(
-                    title = { Text("${selectedItems.size} selecionados") },
+                    title = { Text("${selectedItems.size}") }, // Apenas o número para dar espaço
                     navigationIcon = {
                         IconButton(onClick = { isSelectionMode = false; selectedItems = emptySet() }) {
                             Icon(Icons.Default.Close, contentDescription = "Cancelar")
                         }
                     },
                     actions = {
+                        // O botão Editar SÓ aparece se houver 1 item selecionado
+                        if (selectedItems.size == 1) {
+                            IconButton(onClick = {
+                                val itemToEdit = selectedItems.first()
+                                isSelectionMode = false
+                                selectedItems = emptySet()
+                                onNavigateToEdit(itemToEdit.id) // Envia o ID para editar
+                            }) {
+                                Icon(Icons.Default.Edit, contentDescription = "Editar")
+                            }
+                        }
+
                         TextButton(onClick = { selectedItems = if (selectedItems.size == clothingList.size) emptySet() else clothingList.toSet() }) {
                             Text(if (selectedItems.size == clothingList.size) "Nenhum" else "Todos")
                         }
+
                         IconButton(onClick = {
                             viewModel.deleteMultipleClothing(selectedItems.toList())
                             isSelectionMode = false
                             selectedItems = emptySet()
                         }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = MaterialTheme.colorScheme.error)
+                            // Removida a cor "error" para ficar uniforme com os outros ícones
+                            Icon(Icons.Default.Delete, contentDescription = "Eliminar")
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 )
             } else {
                 TopAppBar(
-                    title = { Text("Meu Roupeiro", fontWeight = FontWeight.Bold) },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                    title = { Text("Roupeiro", fontWeight = FontWeight.Bold) },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
                 )
             }
         },
@@ -144,6 +163,34 @@ fun InventoryScreen(
             ) {
                 items(clothingList, key = { it.id }) { item ->
                     val isSelected = selectedItems.contains(item)
+
+                    // ==========================================
+                    // 1. LÓGICA DE TEMPERATURA (0 a 30 dias)
+                    // ==========================================
+                    val currentTime = System.currentTimeMillis()
+                    val lastWorn = item.lastWornDate ?: 0L
+                    val oneMonthMillis = 30L * 24 * 60 * 60 * 1000 // 30 dias em milissegundos
+
+                    // Calcula a percentagem de uso (1.0 = Hoje, 0.0 = Há mais de 1 mês ou nunca)
+                    val temperatureFraction = if (lastWorn <= 0L) {
+                        0f
+                    } else {
+                        val elapsed = currentTime - lastWorn
+                        if (elapsed > oneMonthMillis) {
+                            0f
+                        } else {
+                            1f - (elapsed.toFloat() / oneMonthMillis.toFloat())
+                        }
+                    }.coerceIn(0f, 1f) // Garante que fica estritamente entre 0 e 1
+
+                    // Cria um degradê dinâmico entre Azul (Frio) e Vermelho (Quente)
+                    val tempColor = androidx.compose.ui.graphics.lerp(
+                        start = androidx.compose.ui.graphics.Color(0xFF4FC3F7), // Azul Gelo
+                        stop = androidx.compose.ui.graphics.Color(0xFFFF5252),  // Vermelho Fogo
+                        fraction = temperatureFraction
+                    )
+                    // ==========================================
+
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -163,13 +210,40 @@ fun InventoryScreen(
                         colors = CardDefaults.cardColors(containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant)
                     ) {
                         Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                            // Imagem da Peça
                             AsyncImage(model = item.imageUri, contentDescription = null, modifier = Modifier.size(72.dp).clip(RoundedCornerShape(12.dp)), contentScale = ContentScale.Crop)
+
                             Spacer(modifier = Modifier.width(16.dp))
+
+                            // Textos e Barra de Temperatura
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(text = item.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(text = "${item.category} • ${item.weatherTag}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                // O DESENHO DA BARRA
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    // Emoji Frio
+                                    Text(text = "❄️", style = MaterialTheme.typography.labelSmall)
+
+                                    LinearProgressIndicator(
+                                        progress = temperatureFraction,
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .padding(horizontal = 6.dp)
+                                            .height(6.dp)
+                                            .clip(RoundedCornerShape(50)),
+                                        color = tempColor,
+                                        trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                    )
+
+                                    // Emoji Quente
+                                    Text(text = "🔥", style = MaterialTheme.typography.labelSmall)
+                                }
                             }
+
                             if (isSelectionMode) { Checkbox(checked = isSelected, onCheckedChange = null) }
                         }
                     }

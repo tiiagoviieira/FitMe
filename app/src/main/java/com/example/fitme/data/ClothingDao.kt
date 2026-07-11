@@ -19,6 +19,12 @@ interface ClothingDao {
     @Query("SELECT * FROM clothing_items")
     fun getAllClothing(): Flow<List<ClothingItem>>
 
+    @Query("SELECT * FROM clothing_items WHERE id = :itemId")
+    suspend fun getClothingById(itemId: String): ClothingItem?
+
+    @Query("UPDATE clothing_items SET lastWornDate = :date WHERE id = :id")
+    suspend fun updateLastWornDate(id: String, date: Long)
+
     @Delete
     suspend fun deleteClothingList(items: List<ClothingItem>)
 }
