@@ -1,4 +1,4 @@
-package com.example.fitme.ui.auth
+package com.example.fitme.ui.profile
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -8,21 +8,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.fitme.model.User
+import com.example.fitme.ui.auth.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RegisterScreen(
+fun EditProfileScreen(
     viewModel: AuthViewModel,
+    currentUser: User,
     onSaveComplete: () -> Unit,
     onCancel: () -> Unit
 ) {
-    var username by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var phone by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    // Como a conta já existe, carregamos os dados logo de início
+    var username by remember { mutableStateOf(currentUser.username) }
+    var email by remember { mutableStateOf(currentUser.email) }
+    var phone by remember { mutableStateOf(currentUser.phone) }
+    var password by remember { mutableStateOf(currentUser.passwordHash) }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Criar Nova Conta") }) }
+        topBar = { TopAppBar(title = { Text("Editar Perfil") }) }
     ) { padding ->
         Column(
             modifier = Modifier.padding(padding).padding(24.dp).fillMaxSize(),
@@ -33,8 +36,14 @@ fun RegisterScreen(
 
                 ElevatedButton(
                     onClick = {
-                        val newUser = User(username = username, email = email, phone = phone, passwordHash = password)
-                        viewModel.register(newUser) { onSaveComplete() }
+                        // Mantemos o ID atual para garantir que substituímos na BD e não criamos um novo
+                        val updatedUser = currentUser.copy(
+                            username = username,
+                            email = email,
+                            phone = phone,
+                            passwordHash = password
+                        )
+                        viewModel.register(updatedUser) { onSaveComplete() }
                     },
                     shape = RoundedCornerShape(50),
                     colors = ButtonDefaults.elevatedButtonColors(
@@ -42,7 +51,7 @@ fun RegisterScreen(
                         contentColor = MaterialTheme.colorScheme.onPrimary
                     )
                 ) {
-                    Text("Registar")
+                    Text("Guardar")
                 }
             }
 

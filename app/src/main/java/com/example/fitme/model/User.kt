@@ -8,7 +8,9 @@ import java.util.UUID
 data class User(
     @PrimaryKey val id: String = UUID.randomUUID().toString(),
     val username: String,
-    val emailOrPhone: String,
-    val passwordHash: String, // Numa app real usaríamos Hash, aqui guardamos a string para o MVP
-    val profileImageUri: String? = null
+    val email: String,
+    val phone: String,
+    val passwordHash: String,
+    val profileImageUri: String? = null,
+    val hasActiveSession: Boolean = true
 )

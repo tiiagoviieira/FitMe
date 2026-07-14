@@ -181,7 +181,6 @@ fun OutfitOfTheDayScreen(viewModel: ClothingViewModel, authViewModel: AuthViewMo
             ) {
                 Column(modifier = Modifier.padding(24.dp).fillMaxSize()) {
                     Text("O que tens vestido?", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-                    Text("As peças com cores mais parecidas aparecem primeiro.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(modifier = Modifier.height(16.dp))
 
                     // Grelha de Roupas
@@ -241,12 +240,12 @@ fun OutfitOfTheDayScreen(viewModel: ClothingViewModel, authViewModel: AuthViewMo
                         }
                         Button(
                             onClick = {
-                                // 1. Atualiza a data das roupas (se houver alguma selecionada)
+                                // Atualiza a data das roupas
                                 selectedItems.forEach { item ->
                                     viewModel.updateLastWornDate(item.id)
                                 }
 
-                                // 2. GUARDA A FOTO DO OUTFIT NA BASE DE DADOS
+                                // GUARDA A FOTO DO OUTFIT NA BASE DE DADOS
                                 val currentUserId = authViewModel.currentUserId.value ?: "guest"
                                 authViewModel.saveOutfit(
                                     Outfit(
@@ -259,7 +258,7 @@ fun OutfitOfTheDayScreen(viewModel: ClothingViewModel, authViewModel: AuthViewMo
                                 showDialog = false
                                 capturedUri = null // Limpa o ecrã
                             }
-                            // O botão está sempre ativo agora! Removido o 'enabled = selectedItems.isNotEmpty()'
+
                         ) {
                             Text("Confirmar")
                         }

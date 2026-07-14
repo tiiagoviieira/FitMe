@@ -17,4 +17,15 @@ interface UserDao {
 
     @Query("SELECT * FROM users")
     fun getAllUsersFlow(): Flow<List<User>>
+
+    @Query("SELECT * FROM users WHERE phone = :phone LIMIT 1")
+    suspend fun getUserByPhone(phone: String): User?
+
+    // Atualiza o estado da sessão (true = ativa, false = terminada)
+    @Query("UPDATE users SET hasActiveSession = :status WHERE id = :userId")
+    suspend fun updateSessionStatus(userId: String, status: Boolean)
+
+    // Devolve apenas os utilizadores que não terminaram a sessão
+    @Query("SELECT * FROM users WHERE hasActiveSession = 1")
+    fun getActiveUsersFlow(): Flow<List<User>>
 }

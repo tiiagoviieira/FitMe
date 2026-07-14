@@ -17,25 +17,25 @@ fun processOutfitMatching(
     capturedUri: Uri,
     viewModel: ClothingViewModel,
     coroutineScope: CoroutineScope,
-    onResult: (List<ClothingItem>) -> Unit // NOVO: Callback para devolver a lista ordenada
+    onResult: (List<ClothingItem>) -> Unit
 ) {
     coroutineScope.launch(Dispatchers.IO) {
         try {
-            // 1. Converter a foto capturada
+            // Converter a foto capturada em bitmap
             val capturedBitmap = uriToBitmap(context, capturedUri)
             if (capturedBitmap == null) {
                 withContext(Dispatchers.Main) { onResult(emptyList()) }
                 return@launch
             }
 
-            // 2. Calcular o Histograma de Cores da foto tirada
+            // Calcular o Histograma de Cores da foto tirada
             val capturedHist = calculateColorHistogram(capturedBitmap)
 
-            // 3. Obter todas as peças do roupeiro
+            // Obter todas as peças do roupeiro
             val inventory = viewModel.processedClothing.first()
             val scoredItems = mutableListOf<Pair<ClothingItem, Double>>()
 
-            // 4. Comparar com cada peça do inventário
+            // Comparar com cada peça do inventário
             for (item in inventory) {
                 if (item.imageUri.isNotBlank()) {
                     val itemUri = Uri.parse(item.imageUri)
@@ -51,11 +51,11 @@ fun processOutfitMatching(
                 }
             }
 
-            // 5. Ordenar as roupas (maior probabilidade de correspondência primeiro)
+            // Ordenar as roupas por maior probabilidade de correspondência com a foto
             scoredItems.sortByDescending { it.second }
             val rankedList = scoredItems.map { it.first }
 
-            // 6. Devolver a lista ao ecrã principal
+            // Devolver a lista ao ecrã principal
             withContext(Dispatchers.Main) {
                 onResult(rankedList)
             }

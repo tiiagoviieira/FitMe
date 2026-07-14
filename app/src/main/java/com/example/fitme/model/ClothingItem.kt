@@ -8,10 +8,12 @@ import java.util.UUID
 data class ClothingItem(
     @PrimaryKey
     val id: String = UUID.randomUUID().toString(),
+    val userId: String,
     val name: String,
     val category: String,
     val imageUri: String, // path to file
     val weatherTag: String, // Estacao
     val lastWornDate: Long? = null, // Data da última utilização
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val referenceLink: String? = null
 )

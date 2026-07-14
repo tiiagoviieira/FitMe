@@ -23,16 +23,17 @@ import coil.compose.AsyncImage
 import java.io.File
 import com.example.fitme.model.ClothingItem
 import androidx.compose.foundation.clickable
+import java.util.UUID
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddClothingScreen(viewModel: ClothingViewModel, itemId: String? = null, onSaveComplete: () -> Unit) {
+fun AddClothingScreen(viewModel: ClothingViewModel, itemId: String? = null, currentUserId: String, onSaveComplete: () -> Unit) {
     val context = LocalContext.current
     var existingItem by remember { mutableStateOf<ClothingItem?>(null) }
     var name by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("") }
     var selectedSeasons by remember { mutableStateOf(setOf<String>()) }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
-
+    var referenceLink by remember { mutableStateOf("") }
     var tempUri by remember { mutableStateOf<Uri?>(null) }
 
     LaunchedEffect(itemId) {
@@ -73,8 +74,20 @@ fun AddClothingScreen(viewModel: ClothingViewModel, itemId: String? = null, onSa
                 ElevatedButton(onClick = { onSaveComplete() }, shape = RoundedCornerShape(50)) { Text("Cancelar") }
                 ElevatedButton(
                     onClick = {
-                        val newItem = existingItem?.copy(name = name, category = category, weatherTag = selectedSeasons.joinToString(", "), imageUri = imageUri.toString())
-                            ?: ClothingItem(name = name, category = category, weatherTag = selectedSeasons.joinToString(", "), imageUri = imageUri.toString())
+                        if (currentUserId.isBlank()) return@ElevatedButton
+                        val newItem = existingItem?.copy(
+                            name = name,
+                            category = category,
+                            weatherTag = selectedSeasons.joinToString(", "),
+                            imageUri = imageUri.toString()
+                        ) ?: ClothingItem(
+                            id = UUID.randomUUID().toString(),
+                            userId = currentUserId,
+                            name = name,
+                            category = category,
+                            weatherTag = selectedSeasons.joinToString(", "),
+                            imageUri = imageUri.toString()
+                        )
                         viewModel.addClothing(newItem)
                         onSaveComplete()
                     },
@@ -124,6 +137,14 @@ fun AddClothingScreen(viewModel: ClothingViewModel, itemId: String? = null, onSa
                 Text("Categoria", fontWeight = FontWeight.Bold)
                 OutlinedTextField(value = category, onValueChange = { category = it }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp))
             }
+
+            OutlinedTextField(
+                value = referenceLink,
+                onValueChange = { referenceLink = it },
+                label = { Text("Link ou Ref. da Peça (Opcional)") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp)
+            )
 
             // Seçao Estacoes
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

@@ -164,9 +164,7 @@ fun InventoryScreen(
                 items(clothingList, key = { it.id }) { item ->
                     val isSelected = selectedItems.contains(item)
 
-                    // ==========================================
-                    // 1. LÓGICA DE TEMPERATURA (0 a 30 dias)
-                    // ==========================================
+                    // LÓGICA DE TEMPERATURA (0 a 30 dias)
                     val currentTime = System.currentTimeMillis()
                     val lastWorn = item.lastWornDate ?: 0L
                     val oneMonthMillis = 30L * 24 * 60 * 60 * 1000 // 30 dias em milissegundos
@@ -251,9 +249,7 @@ fun InventoryScreen(
             }
         }
 
-        // ==========================================
         // ECRÃ 1: DIÁLOGO APENAS DE FILTROS
-        // ==========================================
         if (showFilterDialog) {
             val initialWeather by viewModel.selectedWeatherFilter.collectAsState()
             val initialCategory by viewModel.selectedCategoryFilter.collectAsState()
@@ -333,9 +329,7 @@ fun InventoryScreen(
             }
         }
 
-        // ==========================================
         // ECRÃ 2: DIÁLOGO APENAS DE ORDENAÇÃO
-        // ==========================================
         if (showSortDialog) {
             val currentWeather by viewModel.selectedWeatherFilter.collectAsState() // Precisamos dos filtros atuais para não os perder
             val currentCategory by viewModel.selectedCategoryFilter.collectAsState()

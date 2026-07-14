@@ -14,17 +14,34 @@ class AuthViewModel(private val userDao: UserDao, private val outfitDao: OutfitD
 
     // Guarda o ID do utilizador com sessão iniciada (null = convidado)
     private val _currentUserId = MutableStateFlow<String?>(null)
+
+    val allPublicOutfits = outfitDao.getAllPublicOutfits()
     val currentUserId = _currentUserId.asStateFlow()
+
+    val activeUsers = userDao.getActiveUsersFlow()
 
     fun login(username: String, pass: String, onSuccess: () -> Unit, onError: () -> Unit) {
         viewModelScope.launch {
             val user = userDao.getUserByUsername(username)
             if (user != null && user.passwordHash == pass) {
+                userDao.updateSessionStatus(user.id, true)
                 _currentUserId.value = user.id
                 onSuccess()
             } else {
                 onError()
             }
+        }
+    }
+
+    fun logout() {
+        val currentId = _currentUserId.value
+        if (currentId != null && currentId != "guest") {
+            viewModelScope.launch {
+                userDao.updateSessionStatus(currentId, false)
+                _currentUserId.value = null
+            }
+        } else {
+            _currentUserId.value = null
         }
     }
 
@@ -43,10 +60,6 @@ class AuthViewModel(private val userDao: UserDao, private val outfitDao: OutfitD
         _currentUserId.value = userId
     }
 
-    fun logout() {
-        _currentUserId.value = null
-    }
-
     fun loginAsGuest() {
         _currentUserId.value = "guest"
     }
@@ -60,6 +73,12 @@ class AuthViewModel(private val userDao: UserDao, private val outfitDao: OutfitD
         viewModelScope.launch {
             val updated = outfits.map { it.copy(isPublic = makePublic) }
             outfitDao.updateOutfits(updated)
+        }
+    }
+
+    fun deleteOutfits(outfits: List<Outfit>) {
+        viewModelScope.launch {
+            outfitDao.deleteOutfits(outfits)
         }
     }
 }

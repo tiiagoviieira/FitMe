@@ -13,16 +13,25 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.ui.draw.clip
 
 @Composable
 fun WelcomeScreen(
-    viewModel: AuthViewModel, // Recebemos o ViewModel aqui para tratar do login
+    viewModel: AuthViewModel,
     onNavigateToRegister: () -> Unit,
     onLoginSuccess: () -> Unit
 ) {
+    val activeUsers by viewModel.activeUsers.collectAsState(initial = emptyList())
     var showOptions by remember { mutableStateOf(false) }
     var showLoginDialog by remember { mutableStateOf(false) }
-    var loginError by remember { mutableStateOf(false) } // Para mostrar erro se a pass estiver errada
+    var loginError by remember { mutableStateOf(false) }
 
     // ==========================================
     // ECRÃ PRINCIPAL
@@ -81,9 +90,7 @@ fun WelcomeScreen(
         }
     }
 
-    // ==========================================
     // JANELA FLUTUANTE DE LOGIN
-    // ==========================================
     if (showLoginDialog) {
         var inputUsername by remember { mutableStateOf("") }
         var inputPassword by remember { mutableStateOf("") }
@@ -111,6 +118,46 @@ fun WelcomeScreen(
 
                     Divider()
 
+
+                    // LISTA DE CONTAS COM SESSÃO ATIVA
+
+                    if (activeUsers.isNotEmpty()) {
+                        Text("Contas guardadas:", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+
+                        LazyColumn(modifier = Modifier.heightIn(max = 160.dp)) {
+                            items(activeUsers) { user ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .clickable {
+                                            // Ao clicar, faz login automático sem password!
+                                            viewModel.switchUser(user.id)
+                                            showLoginDialog = false
+                                            onLoginSuccess()
+                                        }
+                                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                                        .padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier.size(36.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(20.dp))
+                                    }
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(user.username, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyLarge)
+                                }
+                            }
+                        }
+
+                        Divider(modifier = Modifier.padding(vertical = 8.dp))
+                        Text("Ou entra com outra conta:", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+                    }
+                    // ==========================================
+
                     if (loginError) {
                         Text(
                             text = "Credenciais incorretas. Tenta novamente.",
@@ -118,6 +165,7 @@ fun WelcomeScreen(
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
+
 
                     OutlinedTextField(
                         value = inputUsername,

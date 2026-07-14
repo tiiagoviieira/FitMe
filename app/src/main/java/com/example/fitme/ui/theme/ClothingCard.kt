@@ -21,7 +21,7 @@ fun ClothingCard(item: ClothingItem) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
-        shape = RoundedCornerShape(16.dp), // Cantos bem arredondados para um look moderno
+        shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -39,7 +39,6 @@ fun ClothingCard(item: ClothingItem) {
                 shape = RoundedCornerShape(12.dp),
                 color = MaterialTheme.colorScheme.primaryContainer
             ) {
-                // Futuramente, aqui entrará a imagem (imageUri) da roupa
             }
 
             Spacer(modifier = Modifier.width(16.dp))
@@ -55,7 +54,7 @@ fun ClothingCard(item: ClothingItem) {
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // Categoria e tag do clima (ex: "Casaco • Frio")
+                // Categoria e tag do clima
                 Text(
                     text = "${item.category} • ${item.weatherTag}",
                     style = MaterialTheme.typography.bodyMedium,

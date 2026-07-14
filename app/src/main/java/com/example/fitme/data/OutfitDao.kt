@@ -12,6 +12,12 @@ interface OutfitDao {
     @Update
     suspend fun updateOutfits(outfits: List<Outfit>)
 
+    @Delete
+    suspend fun deleteOutfits(outfits: List<Outfit>)
+
     @Query("SELECT * FROM outfits WHERE userId = :userId ORDER BY date DESC")
     fun getOutfitsByUser(userId: String): Flow<List<Outfit>>
+
+    @Query("SELECT * FROM outfits WHERE isPublic = 1 ORDER BY date DESC")
+    fun getAllPublicOutfits(): Flow<List<Outfit>>
 }

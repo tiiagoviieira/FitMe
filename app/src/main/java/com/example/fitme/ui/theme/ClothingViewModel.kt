@@ -9,10 +9,24 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 class ClothingViewModel(private val dao: ClothingDao) : ViewModel() {
+
+
 
     // Estados dos filtros e ordenação
     private val _selectedWeatherFilter = MutableStateFlow<String?>(null)
+    private val _currentUserId = MutableStateFlow<String?>(null)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val clothingItems = _currentUserId.flatMapLatest { userId ->
+        if (userId == null) flowOf(emptyList())
+        else dao.getClothingByUserId(userId)
+    }
+
+    val allClothing = dao.getAllClothingGlobal()
     val selectedWeatherFilter = _selectedWeatherFilter.asStateFlow()
 
     private val _selectedCategoryFilter = MutableStateFlow<String?>(null)
@@ -24,7 +38,7 @@ class ClothingViewModel(private val dao: ClothingDao) : ViewModel() {
 
     // Fluxo principal de dados combinado com filtros e ordenação
     val processedClothing = combine(
-        dao.getAllClothing(),
+        clothingItems,
         _selectedWeatherFilter,
         _selectedCategoryFilter,
         _currentSort
@@ -50,11 +64,11 @@ class ClothingViewModel(private val dao: ClothingDao) : ViewModel() {
     }
 
     // Listas dinâmicas para o ecrã de filtros (extraídas do que já existe na BD)
-    val availableWeathers = dao.getAllClothing().map { list ->
+    val availableWeathers = clothingItems.map { list ->
         list.map { it.weatherTag.trim() }.distinct().filter { it.isNotBlank() }
     }
 
-    val availableCategories = dao.getAllClothing().map { list ->
+    val availableCategories = clothingItems.map { list ->
         list.map { it.category.trim() }.distinct().filter { it.isNotBlank() }
     }
 
@@ -69,7 +83,10 @@ class ClothingViewModel(private val dao: ClothingDao) : ViewModel() {
     }
 
     fun deleteMultipleClothing(items: List<ClothingItem>) {
-        viewModelScope.launch { dao.deleteClothingList(items) }
+        viewModelScope.launch {
+            val ids = items.map { it.id }
+            dao.deleteByIds(ids)
+        }
     }
 
     fun updateLastWornDate(id: String) {
@@ -80,5 +97,9 @@ class ClothingViewModel(private val dao: ClothingDao) : ViewModel() {
 
     suspend fun getClothingById(id: String): ClothingItem? {
         return dao.getClothingById(id)
+    }
+
+    fun setUserId(userId: String) {
+        _currentUserId.value = userId
     }
 }
